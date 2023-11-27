@@ -1,4 +1,4 @@
-# My answers for the exercises in part 8 of Full Stack Open
+# My answers for the exercises in part 9 of Full Stack Open
 
 - [1-3](https://fullstackopen.com/en/part9/first_steps_with_type_script#exercises-9-1-9-3)
 - [4-5](https://fullstackopen.com/en/part9/first_steps_with_type_script#exercises-9-4-9-5)
