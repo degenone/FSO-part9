@@ -5,8 +5,6 @@ const calculateBmi = (height: number, weight: number): string => {
         return `Underweight (Severe thinness) (${height}, ${weight})`;
     } else if (bmi > 16.0 && bmi < 16.9) {
         return `Underweight (Moderate thinness) (${height}, ${weight})`;
-    } else if (bmi > 16.0 && bmi < 16.9) {
-        return `Underweight (Moderate thinness) (${height}, ${weight})`;
     } else if (bmi > 17.0 && bmi < 18.4) {
         return `Underweight (Mild thinness) (${height}, ${weight})`;
     } else if (bmi > 18.5 && bmi < 24.9) {
