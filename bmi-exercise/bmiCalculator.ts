@@ -1,3 +1,5 @@
+import parseNumberArgv from './parseNumberArgv';
+
 const calculateBmi = (height: number, weight: number): string => {
     // bmi = mass (kg) / height² (m²)
     const bmi = weight / Math.pow(height / 100, 2);
@@ -20,4 +22,13 @@ const calculateBmi = (height: number, weight: number): string => {
     }
 };
 
-console.log(calculateBmi(180, 74));
+try {
+    const [height, weight] = parseNumberArgv(process.argv, 4, 4);
+    console.log(calculateBmi(height, weight));
+} catch (error) {
+    let errMsg = 'Failed calculating BMI.';
+    if (error instanceof Error) {
+        errMsg += ` Error: ${error.message}`;
+    }
+    console.error(errMsg);
+}

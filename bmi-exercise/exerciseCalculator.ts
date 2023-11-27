@@ -1,3 +1,5 @@
+import parseNumberArgv from './parseNumberArgv';
+
 interface ExerciseReport {
     periodLength: number;
     trainingDays: number;
@@ -37,5 +39,13 @@ const calculateExercises = (
     };
 };
 
-const hours: number[] = [3, 0, 2, 4.5, 0, 3, 1];
-console.log(calculateExercises(hours, 2));
+try {
+    const [target, ...hours] = parseNumberArgv(process.argv, 4, Infinity);
+    console.log(calculateExercises(hours, target));
+} catch (error) {
+    let errMsg = 'Failed calculating exercises.';
+    if (error instanceof Error) {
+        errMsg += ` Error: ${error.message}`;
+    }
+    console.error(errMsg);
+}
