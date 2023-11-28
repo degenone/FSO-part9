@@ -1,6 +1,4 @@
-import parseNumberArgv from './parseNumberArgv';
-
-interface ExerciseReport {
+export interface ExerciseReport {
     periodLength: number;
     trainingDays: number;
     success: boolean;
@@ -10,7 +8,7 @@ interface ExerciseReport {
     average: number;
 }
 
-const calculateExercises = (
+export const calculateExercises = (
     exerciseHours: number[],
     target: number
 ): ExerciseReport => {
@@ -38,14 +36,3 @@ const calculateExercises = (
         average,
     };
 };
-
-try {
-    const [target, ...hours] = parseNumberArgv(process.argv, 4, Infinity);
-    console.log(calculateExercises(hours, target));
-} catch (error) {
-    let errMsg = 'Failed calculating exercises.';
-    if (error instanceof Error) {
-        errMsg += ` Error: ${error.message}`;
-    }
-    console.error(errMsg);
-}
