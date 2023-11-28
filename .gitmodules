@@ -1,0 +1,3 @@
+[submodule "patientor-frontend"]
+	path = patientor-frontend
+	url = git@github.com:degenone/patientor
