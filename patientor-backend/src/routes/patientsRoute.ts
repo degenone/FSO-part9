@@ -1,21 +1,22 @@
 import express from 'express';
 import patientsService from '../services/patientsService';
-import { Gender, Patient } from '../types';
+import toNewPatient from '../utlis';
 const patientsRoute = express.Router();
 
 patientsRoute.get('/', (_req, res) => res.json(patientsService.getAll()));
 
 patientsRoute.post('/', (req, res) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { name, dateOfBirth, ssn, gender, occupation } = req.body;
-    const newPatient: Patient = patientsService.create({
-        name: name as string,
-        dateOfBirth: dateOfBirth as string,
-        ssn: ssn as string,
-        gender: gender as Gender,
-        occupation: occupation as string,
-    });
-    res.json(newPatient);
+    try {
+        const newPatient = toNewPatient(req.body);
+        const patient = patientsService.create(newPatient);
+        res.json(patient);
+    } catch (error: unknown) {
+        let errMsg = 'Failed saving new patient.';
+        if (error instanceof Error) {
+            errMsg += ` [ERR] ${error.message}`;
+        }
+        res.status(400).send({ error: errMsg });
+    }
 });
 
 export default patientsRoute;

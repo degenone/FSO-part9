@@ -1,6 +1,7 @@
 import { PatientData } from '../src/types';
+import toNewPatient from '../src/utlis';
 
-const data: PatientData[] = [
+const data = [
     {
         id: 'd2773336-f723-11e9-8f0b-362b9e155667',
         name: 'John McClane',
@@ -13,7 +14,7 @@ const data: PatientData[] = [
         id: 'd2773598-f723-11e9-8f0b-362b9e155667',
         name: 'Martin Riggs',
         dateOfBirth: '1979-01-30',
-        ssn: '300179-77A',
+        ssn: '300179-077A',
         gender: 'male',
         occupation: 'Cop',
     },
@@ -43,4 +44,10 @@ const data: PatientData[] = [
     },
 ];
 
-export default data;
+const patientDate: PatientData[] = data.map((p) => {
+    const patient = toNewPatient(p) as PatientData;
+    patient.id = p.id;
+    return patient;
+});
+
+export default patientDate;
