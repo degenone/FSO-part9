@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import diaryService from '../services/diaryService';
 import { DiaryEntry } from '../types';
+import axios from 'axios';
 
 interface EntryFormProps {
     addEntry: (entry: DiaryEntry) => void;
+    showNotification: (message: string) => void;
 }
 
 const EntryForm = (props: EntryFormProps) => {
@@ -19,12 +21,24 @@ const EntryForm = (props: EntryFormProps) => {
             weather,
             comment,
         };
-        const addedEntry = await diaryService.create(newEntry);
-        props.addEntry(addedEntry);
-        setDate('');
-        setVisibility('');
-        setWeather('');
-        setComment('');
+        try {
+            const addedEntry = await diaryService.create(newEntry);
+            props.addEntry(addedEntry);
+            setDate('');
+            setVisibility('');
+            setWeather('');
+            setComment('');
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                if (error.response && 'data' in error.response) {
+                    props.showNotification(error.response.data);
+                } else {
+                    props.showNotification(error.message);
+                }
+            } else {
+                console.error(error);
+            }
+        }
     };
     const formGroupStyle = {
         display: 'flex',
