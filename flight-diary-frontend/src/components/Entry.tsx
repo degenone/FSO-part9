@@ -7,7 +7,7 @@ interface DiaryProps {
 const Entry = (props: DiaryProps) => {
     return (
         <div>
-            <h3>Diary entry on {props.entry.date}</h3>
+            <h3>Diary entry from {props.entry.date}</h3>
             <p>Visibility: {props.entry.visibility}</p>
             <p>Weather: {props.entry.weather}</p>
             <p>

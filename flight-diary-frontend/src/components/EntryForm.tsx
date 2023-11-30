@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import diaryService from '../services/diaryService';
-import { DiaryEntry } from '../types';
+import { DiaryEntry, NewDiaryEntry, Visibility, Weather } from '../types';
 import axios from 'axios';
 
 interface EntryFormProps {
@@ -15,12 +15,26 @@ const EntryForm = (props: EntryFormProps) => {
     const [comment, setComment] = useState('');
     const handelSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
-        const newEntry = {
+        if (!visibility || !weather) {
+            let message;
+            if (!visibility && !weather) {
+                message = 'Visibility and Weather options are required.';
+            } else if (!visibility) {
+                message = 'Visibility option is required.';
+            } else {
+                message = 'Weather option is required.';
+            }
+            props.showNotification(message);
+            return;
+        }
+        const newEntry: NewDiaryEntry = {
             date,
-            visibility,
-            weather,
-            comment,
+            visibility: visibility as Visibility,
+            weather: weather as Weather,
         };
+        if (comment) {
+            newEntry.comment = comment;
+        }
         try {
             const addedEntry = await diaryService.create(newEntry);
             props.addEntry(addedEntry);
@@ -54,7 +68,7 @@ const EntryForm = (props: EntryFormProps) => {
                     <div style={formGroupStyle}>
                         <label htmlFor='date'>Date</label>
                         <input
-                            type='text'
+                            type='date'
                             name='date'
                             id='date'
                             required
@@ -63,28 +77,91 @@ const EntryForm = (props: EntryFormProps) => {
                         />
                     </div>
                     <div style={formGroupStyle}>
-                        <label htmlFor='visibility'>Visibility</label>
-                        <input
-                            type='text'
-                            name='visibility'
-                            id='visibility'
-                            required
-                            value={visibility}
-                            onChange={({ target }) =>
-                                setVisibility(target.value)
-                            }
-                        />
+                        <span>Visibility</span>
+                        <div>
+                            <input
+                                type='radio'
+                                name='visibility'
+                                id='poor'
+                                onChange={() => setVisibility('poor')}
+                            />
+                            <label htmlFor='poor'>Poor</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='visibility'
+                                id='ok'
+                                onChange={() => setVisibility('ok')}
+                            />
+                            <label htmlFor='ok'>Ok</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='visibility'
+                                id='good'
+                                onChange={() => setVisibility('good')}
+                            />
+                            <label htmlFor='good'>Good</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='visibility'
+                                id='great'
+                                onChange={() => setVisibility('great')}
+                            />
+                            <label htmlFor='great'>Great</label>
+                        </div>
                     </div>
                     <div style={formGroupStyle}>
-                        <label htmlFor='weather'>Weather</label>
-                        <input
-                            type='text'
-                            name='weather'
-                            id='weather'
-                            required
-                            value={weather}
-                            onChange={({ target }) => setWeather(target.value)}
-                        />
+                        <span>Weather</span>
+                        <div>
+                            <input
+                                type='radio'
+                                name='weather'
+                                id='sunny'
+                                onChange={() => setWeather('sunny')}
+                            />
+                            <label htmlFor='sunny'>Sunny</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='weather'
+                                id='rainy'
+                                onChange={() => setWeather('rainy')}
+                            />
+                            <label htmlFor='rainy'>Rainy</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='weather'
+                                id='cloudy'
+                                onChange={() => setWeather('cloudy')}
+                            />
+                            <label htmlFor='cloudy'>Cloudy</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='weather'
+                                id='windy'
+                                onChange={() => setWeather('windy')}
+                            />
+                            <label htmlFor='windy'>Windy</label>
+                        </div>
+                        <div>
+                            <input
+                                type='radio'
+                                name='weather'
+                                id='stormy'
+                                onChange={() => setWeather('stormy')}
+                            />
+                            <label htmlFor='stormy'>Stormy</label>
+                        </div>
                     </div>
                     <div style={formGroupStyle}>
                         <label htmlFor='comment'>Comment</label>
