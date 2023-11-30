@@ -1,3 +1,6 @@
 [submodule "patientor-frontend"]
 	path = patientor-frontend
 	url = git@github.com:degenone/patientor
+[submodule "flight-diary-backend"]
+	path = flight-diary-backend
+	url = git@github.com:degenone/FSO-flight-diaries
