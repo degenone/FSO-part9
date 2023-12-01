@@ -19,4 +19,10 @@ patientsRoute.post('/', (req, res) => {
     }
 });
 
+patientsRoute.get('/:id', (req, res) => {
+    const patient = patientsService.getById(req.params.id);
+    if (patient === null) return res.status(404).end();
+    return res.json(patient);
+});
+
 export default patientsRoute;
