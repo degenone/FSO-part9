@@ -44,10 +44,10 @@ const data = [
     },
 ];
 
-const patientDate: PatientData[] = data.map((p) => {
+const patientData: PatientData[] = data.map((p) => {
     const patient = toNewPatient(p) as PatientData;
     patient.id = p.id;
     return patient;
 });
 
-export default patientDate;
+export default patientData;
