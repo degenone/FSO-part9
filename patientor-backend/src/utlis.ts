@@ -1,6 +1,7 @@
 import {
     Diagnosis,
     Discharge,
+    EntryBaseNoId,
     Gender,
     NewEntry,
     NewPatient,
@@ -87,15 +88,17 @@ const parseHealthCheckRating = (rating: unknown): number => {
     return Number(rating);
 };
 
-const isEntryType = (type: string): boolean =>
-    ['HealthCheck', 'Hospital', 'OccupationalHealthcare'].includes(type);
+type EntryType = 'HealthCheck' | 'Hospital' | 'OccupationalHealthcare';
 
-const parseType = (
-    type: unknown
-): 'HealthCheck' | 'Hospital' | 'OccupationalHealthcare' => {
+const isEntryType = (type: string): type is EntryType =>
+    type === 'HealthCheck' ||
+    type === 'Hospital' ||
+    type === 'OccupationalHealthcare';
+
+const parseType = (type: unknown): EntryType => {
     if (!type || !isString(type) || !isEntryType(type))
         throw new Error(`Unable to parse type: ${type}`);
-    return type as 'HealthCheck' | 'Hospital' | 'OccupationalHealthcare';
+    return type;
 };
 
 const parseDischarge = (discharge: unknown): Discharge => {
@@ -144,65 +147,89 @@ export const toNewEntry = (object: unknown): NewEntry => {
         throw new Error('Unable to parse patient data');
     }
     if (!('type' in object)) throw new Error("Missing field 'type'");
+    switch (parseType(object.type)) {
+        case 'HealthCheck':
+            return toNewHealthCheckEntry(object);
+        case 'Hospital':
+            return toNewHospitalEntry(object);
+        case 'OccupationalHealthcare':
+            return toNewOccupationalHealthcareEntry(object);
+        default:
+            throw new Error(`Unknown type: ${object.type}`);
+    }
+};
+
+const getEntryBaseParams = (object: object): EntryBaseNoId => {
     if (!('description' in object))
         throw new Error("Missing field 'description'");
     if (!('date' in object)) throw new Error("Missing field 'date'");
     if (!('specialist' in object))
         throw new Error("Missing field 'specialist'");
-    let newEntry = {
+    return {
         description: parseString(object.description, 'description'),
         date: parseDate(object.date, 'date'),
         specialist: parseString(object.specialist, 'specialist'),
-        type: parseType(object.type),
         diagnosisCodes: parseDiagnosisCodes(object),
     };
-    switch (object.type) {
-        case 'HealthCheck':
-            if (!('healthCheckRating' in object))
-                throw new Error("Missing field 'healthCheckRating'");
-            return {
-                ...newEntry,
-                healthCheckRating: parseHealthCheckRating(
-                    object.healthCheckRating
-                ),
-            } as NewEntry;
-        case 'Hospital':
-            if (!('discharge' in object))
-                throw new Error("Missing field 'discharge'");
-            if ('healthCheckRating' in object) {
-                newEntry = {
-                    ...newEntry,
-                    healthCheckRating: parseHealthCheckRating(
-                        object.healthCheckRating
-                    ),
-                } as NewEntry;
-            }
-            return {
-                ...newEntry,
-                discharge: parseDischarge(object.discharge),
-            } as NewEntry;
-        case 'OccupationalHealthcare':
-            if (!('employerName' in object))
-                throw new Error("Missing field 'employerName'");
-            if ('healthCheckRating' in object) {
-                newEntry = {
-                    ...newEntry,
-                    healthCheckRating: parseHealthCheckRating(
-                        object.healthCheckRating
-                    ),
-                };
-            }
-            if ('sickLeave' in object) {
-                newEntry = {
-                    ...newEntry,
-                    sickLeave: parseSickLeave(object.sickLeave),
-                };
-            }
-            return {
-                ...newEntry,
-                employerName: parseString(object.employerName, 'employerName'),
-            } as NewEntry;
-        default:
-            throw new Error(`Unknown type: ${object.type}`);
+};
+
+const toNewHealthCheckEntry = (object: object): NewEntry => {
+    if (!('healthCheckRating' in object))
+        throw new Error("Missing field 'healthCheckRating'");
+    const { description, date, specialist, diagnosisCodes } =
+        getEntryBaseParams(object);
+    return {
+        description,
+        date,
+        specialist,
+        type: 'HealthCheck',
+        diagnosisCodes,
+        healthCheckRating: parseHealthCheckRating(object.healthCheckRating),
+    };
+};
+
+const toNewHospitalEntry = (object: object): NewEntry => {
+    if (!('discharge' in object)) throw new Error("Missing field 'discharge'");
+    const discharge = parseDischarge(object.discharge);
+    const { description, date, specialist, diagnosisCodes } =
+        getEntryBaseParams(object);
+    const newEntry: NewEntry = {
+        description,
+        date,
+        specialist,
+        type: 'Hospital',
+        diagnosisCodes,
+        discharge,
+    };
+    if ('healthCheckRating' in object) {
+        newEntry.healthCheckRating = parseHealthCheckRating(
+            object.healthCheckRating
+        );
     }
+    return newEntry;
+};
+
+const toNewOccupationalHealthcareEntry = (object: object): NewEntry => {
+    if (!('employerName' in object))
+        throw new Error("Missing field 'employerName'");
+    const employerName = parseString(object.employerName, 'employerName');
+    const { description, date, specialist, diagnosisCodes } =
+        getEntryBaseParams(object);
+    const newEntry: NewEntry = {
+        description,
+        date,
+        specialist,
+        type: 'OccupationalHealthcare',
+        diagnosisCodes,
+        employerName,
+    };
+    if ('sickLeave' in object) {
+        newEntry.sickLeave = parseSickLeave(object.sickLeave);
+    }
+    if ('healthCheckRating' in object) {
+        newEntry.healthCheckRating = parseHealthCheckRating(
+            object.healthCheckRating
+        );
+    }
+    return newEntry;
 };

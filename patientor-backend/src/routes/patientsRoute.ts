@@ -1,6 +1,6 @@
 import express from 'express';
 import patientsService from '../services/patientsService';
-import { toNewPatient } from '../utlis';
+import { toNewEntry, toNewPatient } from '../utlis';
 const patientsRoute = express.Router();
 
 patientsRoute.get('/', (_req, res) => res.json(patientsService.getAll()));
@@ -22,6 +22,13 @@ patientsRoute.post('/', (req, res) => {
 patientsRoute.get('/:id', (req, res) => {
     const patient = patientsService.getById(req.params.id);
     if (!patient) return res.status(404).end();
+    return res.json(patient);
+});
+
+patientsRoute.post('/:id/entries', (req, res) => {
+    const newEntry = toNewEntry(req.body);
+    const patient = patientsService.addEntry(req.params.id, newEntry);
+    if (!patient) res.status(400).end();
     return res.json(patient);
 });
 

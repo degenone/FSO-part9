@@ -18,6 +18,8 @@ interface EntryBase {
     diagnosisCodes?: Array<Diagnosis['code']>;
 }
 
+export type EntryBaseNoId = Omit<EntryBase, 'id'>;
+
 export enum HealthCheckRating {
     Healty = 0,
     LowRisk = 1,
