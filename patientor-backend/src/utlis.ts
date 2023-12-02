@@ -10,18 +10,18 @@ import {
 const isString = (str: unknown): str is string =>
     typeof str === 'string' || str instanceof String;
 
-const parseName = (name: unknown): string => {
-    if (!name || !isString(name))
-        throw new Error(`Unable to parse name: ${name}`);
-    return name;
+const parseString = (str: unknown, paramName: string): string => {
+    if (!str || !isString(str))
+        throw new Error(`Unable to parse ${paramName}: ${str}`);
+    return str;
 };
 
 const isDate = (date: string): boolean => Boolean(Date.parse(date));
 
-const parseDateOfBirth = (dob: unknown): string => {
-    if (!dob || !isString(dob) || !isDate(dob))
-        throw new Error(`Unable to parse dateOfBirth: ${dob}`);
-    return dob;
+const parseDate = (date: unknown, paramName: string): string => {
+    if (!date || !isString(date) || !isDate(date))
+        throw new Error(`Unable to parse ${paramName}: ${date}`);
+    return date;
 };
 
 const isSsn = (ssn: string): boolean =>
@@ -44,12 +44,6 @@ const parseGender = (gender: unknown): Gender => {
     return gender;
 };
 
-const parseOccupation = (occupation: unknown): string => {
-    if (!occupation || !isString(occupation))
-        throw new Error(`Unable to parse occupation: ${occupation}`);
-    return occupation;
-};
-
 const ssnAndDoBMatch = (ssn: string, dob: string): boolean => {
     const year = `${
         ssn[6] === '+' ? '18' : ssn[6] === '-' ? '19' : '20'
@@ -70,37 +64,19 @@ export const toNewPatient = (object: unknown): NewPatient => {
     if (!('gender' in object)) throw new Error("Missing field 'gender'");
     if (!('occupation' in object))
         throw new Error("Missing field 'occupation'");
-    const dateOfBirth = parseDateOfBirth(object.dateOfBirth);
+    const dateOfBirth = parseDate(object.dateOfBirth, 'dateOfBirth');
     const ssn = parseSsn(object.ssn);
     if (!ssnAndDoBMatch(ssn, dateOfBirth))
         throw new Error(`Ssn and date of birth do not match.`);
     const newPatient: NewPatient = {
-        name: parseName(object.name),
+        name: parseString(object.name, 'name'),
         dateOfBirth,
         ssn,
         gender: parseGender(object.gender),
-        occupation: parseOccupation(object.occupation),
+        occupation: parseString(object.occupation, 'occupation'),
         entries: [],
     };
     return newPatient;
-};
-
-const parseDescription = (description: unknown): string => {
-    if (!description || !isString(description))
-        throw new Error(`Unable to parse description: ${description}`);
-    return description;
-};
-
-const parseDate = (date: unknown): string => {
-    if (!date || !isString(date) || !isDate(date))
-        throw new Error(`Unable to parse date: ${date}`);
-    return date;
-};
-
-const parseSpecialist = (specialist: unknown): string => {
-    if (!specialist || !isString(specialist))
-        throw new Error(`Unable to parse specialist: ${specialist}`);
-    return specialist;
 };
 
 const isNumber = (num: string): boolean => !isNaN(+num);
@@ -131,15 +107,9 @@ const parseDischarge = (discharge: unknown): Discharge => {
     ) {
         throw new Error(`Unable to parse discharge: ${discharge}`);
     }
-    if (!isString(discharge.date) || !isDate(discharge.date))
-        throw new Error(`Unable to parse discharge date: ${discharge.date}`);
-    if (!isString(discharge.criteria))
-        throw new Error(
-            `Unable to parse discharge criteria: ${discharge.criteria}`
-        );
     return {
-        date: discharge.date,
-        criteria: discharge.criteria,
+        date: parseDate(discharge.date, 'discharge date'),
+        criteria: parseString(discharge.criteria, 'discharge criteria'),
     };
 };
 
@@ -152,24 +122,21 @@ const parseSickLeave = (sickLeave: unknown): SickLeave => {
     ) {
         throw new Error(`Unable to parse sickLeave: ${sickLeave}`);
     }
-    if (!isString(sickLeave.startDate) || !isDate(sickLeave.startDate))
-        throw new Error(
-            `Unable to parse sickLeave start date: ${sickLeave.startDate}`
-        );
-    if (!isString(sickLeave.endDate) || !isDate(sickLeave.endDate))
-        throw new Error(
-            `Unable to parse sickLeave end date: ${sickLeave.endDate}`
-        );
     return {
-        startDate: sickLeave.startDate,
-        endDate: sickLeave.endDate,
+        startDate: parseDate(sickLeave.startDate, 'sick leave start date'),
+        endDate: parseDate(sickLeave.endDate, 'sick leave end date'),
     };
 };
 
-const parseEmployerName = (employerName: unknown): string => {
-    if (!employerName || !isString(employerName))
-        throw new Error(`Unable to parse employer name: ${employerName}`);
-    return employerName;
+const parseDiagnosisCodes = (object: unknown): Array<Diagnosis['code']> => {
+    if (
+        !object ||
+        typeof object !== 'object' ||
+        !('diagnosisCodes' in object)
+    ) {
+        return [] as Array<Diagnosis['code']>;
+    }
+    return object.diagnosisCodes as Array<Diagnosis['code']>;
 };
 
 export const toNewEntry = (object: unknown): NewEntry => {
@@ -182,50 +149,59 @@ export const toNewEntry = (object: unknown): NewEntry => {
     if (!('date' in object)) throw new Error("Missing field 'date'");
     if (!('specialist' in object))
         throw new Error("Missing field 'specialist'");
-    const newEntry: NewEntry = {
-        description: parseDescription(object.description),
-        date: parseDate(object.date),
-        specialist: parseSpecialist(object.specialist),
+    let newEntry = {
+        description: parseString(object.description, 'description'),
+        date: parseDate(object.date, 'date'),
+        specialist: parseString(object.specialist, 'specialist'),
         type: parseType(object.type),
+        diagnosisCodes: parseDiagnosisCodes(object),
     };
-    if ('diagnosisCodes' in object) {
-        newEntry.diagnosisCodes = object.diagnosisCodes as Array<
-            Diagnosis['code']
-        >;
-    } else {
-        newEntry.diagnosisCodes = [] as Array<Diagnosis['code']>;
-    }
-    switch (newEntry.type) {
+    switch (object.type) {
         case 'HealthCheck':
             if (!('healthCheckRating' in object))
                 throw new Error("Missing field 'healthCheckRating'");
-            newEntry.healthCheckRating = parseHealthCheckRating(
-                object.healthCheckRating
-            );
-            return newEntry;
-        case 'Hospital':
-            if ('healthCheckRating' in object) {
-                newEntry.healthCheckRating = parseHealthCheckRating(
+            return {
+                ...newEntry,
+                healthCheckRating: parseHealthCheckRating(
                     object.healthCheckRating
-                );
-            }
+                ),
+            } as NewEntry;
+        case 'Hospital':
             if (!('discharge' in object))
                 throw new Error("Missing field 'discharge'");
-            newEntry.discharge = parseDischarge(object.discharge);
-            return newEntry;
-        case 'OccupationalHealthcare':
             if ('healthCheckRating' in object) {
-                newEntry.healthCheckRating = parseHealthCheckRating(
-                    object.healthCheckRating
-                );
+                newEntry = {
+                    ...newEntry,
+                    healthCheckRating: parseHealthCheckRating(
+                        object.healthCheckRating
+                    ),
+                } as NewEntry;
             }
-            if ('sickLeave' in object) {
-                newEntry.sickLeave = parseSickLeave(object.sickLeave);
-            }
+            return {
+                ...newEntry,
+                discharge: parseDischarge(object.discharge),
+            } as NewEntry;
+        case 'OccupationalHealthcare':
             if (!('employerName' in object))
                 throw new Error("Missing field 'employerName'");
-            newEntry.employerName = parseEmployerName(object.employerName);
-            return newEntry;
+            if ('healthCheckRating' in object) {
+                newEntry = {
+                    ...newEntry,
+                    healthCheckRating: parseHealthCheckRating(
+                        object.healthCheckRating
+                    ),
+                };
+            }
+            if ('sickLeave' in object) {
+                newEntry = {
+                    ...newEntry,
+                    sickLeave: parseSickLeave(object.sickLeave),
+                };
+            }
+            return {
+                ...newEntry,
+                employerName: parseString(object.employerName, 'employerName'),
+            } as NewEntry;
         default:
             throw new Error(`Unknown type: ${object.type}`);
     }
