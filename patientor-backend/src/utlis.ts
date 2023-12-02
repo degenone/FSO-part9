@@ -1,4 +1,11 @@
-import { Gender, NewPatient } from './types';
+import {
+    Diagnosis,
+    Discharge,
+    Gender,
+    NewEntry,
+    NewPatient,
+    SickLeave,
+} from './types';
 
 const isString = (str: unknown): str is string =>
     typeof str === 'string' || str instanceof String;
@@ -52,7 +59,7 @@ const ssnAndDoBMatch = (ssn: string, dob: string): boolean => {
     return Date.parse(`${year}-${month}-${day}`) === Date.parse(dob);
 };
 
-const toNewPatient = (object: unknown): NewPatient => {
+export const toNewPatient = (object: unknown): NewPatient => {
     if (!object || typeof object !== 'object') {
         throw new Error('Unable to parse patient data');
     }
@@ -78,4 +85,148 @@ const toNewPatient = (object: unknown): NewPatient => {
     return newPatient;
 };
 
-export default toNewPatient;
+const parseDescription = (description: unknown): string => {
+    if (!description || !isString(description))
+        throw new Error(`Unable to parse description: ${description}`);
+    return description;
+};
+
+const parseDate = (date: unknown): string => {
+    if (!date || !isString(date) || !isDate(date))
+        throw new Error(`Unable to parse date: ${date}`);
+    return date;
+};
+
+const parseSpecialist = (specialist: unknown): string => {
+    if (!specialist || !isString(specialist))
+        throw new Error(`Unable to parse specialist: ${specialist}`);
+    return specialist;
+};
+
+const isNumber = (num: string): boolean => !isNaN(+num);
+
+const parseHealthCheckRating = (rating: unknown): number => {
+    if (!rating || !isString(rating) || !isNumber(rating))
+        throw new Error(`Unable to parse rating: ${rating}`);
+    return Number(rating);
+};
+
+const isEntryType = (type: string): boolean =>
+    ['HealthCheck', 'Hospital', 'OccupationalHealthcare'].includes(type);
+
+const parseType = (
+    type: unknown
+): 'HealthCheck' | 'Hospital' | 'OccupationalHealthcare' => {
+    if (!type || !isString(type) || !isEntryType(type))
+        throw new Error(`Unable to parse type: ${type}`);
+    return type as 'HealthCheck' | 'Hospital' | 'OccupationalHealthcare';
+};
+
+const parseDischarge = (discharge: unknown): Discharge => {
+    if (
+        !discharge ||
+        typeof discharge !== 'object' ||
+        !('date' in discharge) ||
+        !('criteria' in discharge)
+    ) {
+        throw new Error(`Unable to parse discharge: ${discharge}`);
+    }
+    if (!isString(discharge.date) || !isDate(discharge.date))
+        throw new Error(`Unable to parse discharge date: ${discharge.date}`);
+    if (!isString(discharge.criteria))
+        throw new Error(
+            `Unable to parse discharge criteria: ${discharge.criteria}`
+        );
+    return {
+        date: discharge.date,
+        criteria: discharge.criteria,
+    };
+};
+
+const parseSickLeave = (sickLeave: unknown): SickLeave => {
+    if (
+        !sickLeave ||
+        typeof sickLeave !== 'object' ||
+        !('startDate' in sickLeave) ||
+        !('endDate' in sickLeave)
+    ) {
+        throw new Error(`Unable to parse sickLeave: ${sickLeave}`);
+    }
+    if (!isString(sickLeave.startDate) || !isDate(sickLeave.startDate))
+        throw new Error(
+            `Unable to parse sickLeave start date: ${sickLeave.startDate}`
+        );
+    if (!isString(sickLeave.endDate) || !isDate(sickLeave.endDate))
+        throw new Error(
+            `Unable to parse sickLeave end date: ${sickLeave.endDate}`
+        );
+    return {
+        startDate: sickLeave.startDate,
+        endDate: sickLeave.endDate,
+    };
+};
+
+const parseEmployerName = (employerName: unknown): string => {
+    if (!employerName || !isString(employerName))
+        throw new Error(`Unable to parse employer name: ${employerName}`);
+    return employerName;
+};
+
+export const toNewEntry = (object: unknown): NewEntry => {
+    if (!object || typeof object !== 'object') {
+        throw new Error('Unable to parse patient data');
+    }
+    if (!('type' in object)) throw new Error("Missing field 'type'");
+    if (!('description' in object))
+        throw new Error("Missing field 'description'");
+    if (!('date' in object)) throw new Error("Missing field 'date'");
+    if (!('specialist' in object))
+        throw new Error("Missing field 'specialist'");
+    const newEntry: NewEntry = {
+        description: parseDescription(object.description),
+        date: parseDate(object.date),
+        specialist: parseSpecialist(object.specialist),
+        type: parseType(object.type),
+    };
+    if ('diagnosisCodes' in object) {
+        newEntry.diagnosisCodes = object.diagnosisCodes as Array<
+            Diagnosis['code']
+        >;
+    } else {
+        newEntry.diagnosisCodes = [] as Array<Diagnosis['code']>;
+    }
+    switch (newEntry.type) {
+        case 'HealthCheck':
+            if (!('healthCheckRating' in object))
+                throw new Error("Missing field 'healthCheckRating'");
+            newEntry.healthCheckRating = parseHealthCheckRating(
+                object.healthCheckRating
+            );
+            return newEntry;
+        case 'Hospital':
+            if ('healthCheckRating' in object) {
+                newEntry.healthCheckRating = parseHealthCheckRating(
+                    object.healthCheckRating
+                );
+            }
+            if (!('discharge' in object))
+                throw new Error("Missing field 'discharge'");
+            newEntry.discharge = parseDischarge(object.discharge);
+            return newEntry;
+        case 'OccupationalHealthcare':
+            if ('healthCheckRating' in object) {
+                newEntry.healthCheckRating = parseHealthCheckRating(
+                    object.healthCheckRating
+                );
+            }
+            if ('sickLeave' in object) {
+                newEntry.sickLeave = parseSickLeave(object.sickLeave);
+            }
+            if (!('employerName' in object))
+                throw new Error("Missing field 'employerName'");
+            newEntry.employerName = parseEmployerName(object.employerName);
+            return newEntry;
+        default:
+            throw new Error(`Unknown type: ${object.type}`);
+    }
+};

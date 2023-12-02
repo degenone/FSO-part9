@@ -1,6 +1,6 @@
 import express from 'express';
 import patientsService from '../services/patientsService';
-import toNewPatient from '../utlis';
+import { toNewPatient } from '../utlis';
 const patientsRoute = express.Router();
 
 patientsRoute.get('/', (_req, res) => res.json(patientsService.getAll()));
