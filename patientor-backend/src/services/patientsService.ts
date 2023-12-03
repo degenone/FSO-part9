@@ -15,9 +15,8 @@ const getAll = (): Patient[] =>
     );
 
 const create = (newPatient: NewPatient): Patient => {
-    const id = uuidv4();
     const patient = {
-        id,
+        id: uuidv4(),
         ...newPatient,
     };
     patientData.push(patient);
@@ -27,13 +26,15 @@ const create = (newPatient: NewPatient): Patient => {
 const getById = (patientId: string): PatientData | undefined =>
     patientData.find((p) => p.id === patientId);
 
-const addEntry = (patientId: string, newEntry: NewEntry): PatientData | null => {
+const addEntry = (
+    patientId: string,
+    newEntry: NewEntry
+): PatientData | null => {
     const patient = patientData.find((p) => p.id === patientId);
     if (!patient) return null;
-    const id = uuidv4();
     const entry = {
-        id,
-        ...newEntry
+        id: uuidv4(),
+        ...newEntry,
     };
     patient.entries.push(entry);
     return patient;

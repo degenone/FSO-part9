@@ -80,12 +80,15 @@ export const toNewPatient = (object: unknown): NewPatient => {
     return newPatient;
 };
 
-const isNumber = (num: string): boolean => !isNaN(+num);
+const isNumber = (num: unknown): num is number => !isNaN(Number(num));
+
+const isHealthCheckRating = (rating: number): boolean =>
+    rating === 0 || rating === 1 || rating === 2 || rating === 3;
 
 const parseHealthCheckRating = (rating: unknown): number => {
-    if (!rating || !isString(rating) || !isNumber(rating))
+    if (!isNumber(rating) || !isHealthCheckRating(rating))
         throw new Error(`Unable to parse rating: ${rating}`);
-    return Number(rating);
+    return rating;
 };
 
 type EntryType = 'HealthCheck' | 'Hospital' | 'OccupationalHealthcare';
